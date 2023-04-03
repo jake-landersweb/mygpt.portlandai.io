@@ -24,6 +24,8 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
         { value: 3, label: "I Need a TikTok Script" },
         { value: -1, label: "Im Posting On Another Platform" },
         { value: 20, label: "I Need to Write an Essay" },
+        { value: 30, label: "Compose An Email" },
+        { value: 40, label: "Reply to an Email" },
     ]
 
     const [isLoading, setIsLoading] = useState(false)
@@ -33,6 +35,8 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
     const [postIdea, setPostIdea] = useState("")
     const [essayPrompt, setEssayPrompt] = useState("")
     const [paragraphs, setParagraphs] = useState(3)
+    const [email, setEmail] = useState("")
+    const [emailTopic, setEmailTopic] = useState("")
     const [resp, setResp] = useState("")
     const [reset, setReset] = useState(false)
     const [type, setType] = useState(availableModes[0])
@@ -101,6 +105,22 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
                         body: JSON.stringify(data),
                     })
                     break
+                case 30:
+                    data = { reset: reset, writingSample: writing, resume: resume, emailTopic: emailTopic }
+                    response = await fetch(`/api/session/${sessionData['sessionId']}/email`, {
+                        "method": "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(data),
+                    })
+                    break
+                case 40:
+                    data = { reset: reset, writingSample: writing, resume: resume, email: email, emailTopic: emailTopic }
+                    response = await fetch(`/api/session/${sessionData['sessionId']}/email`, {
+                        "method": "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(data),
+                    })
+                    break
                 case -1:
                     data = { message: postIdea, reset: reset, writingSample: writing, resume: resume, type: type.value, prompt: "" }
                     response = await fetch(`/api/session/${sessionData['sessionId']}/post`, {
@@ -143,6 +163,10 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
                 return customPostView()
             case 20:
                 return essayView()
+            case 30:
+                return emailView()
+            case 40:
+                return emailReplyView()
             default:
                 return <div className=""></div>
         }
@@ -248,6 +272,59 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
                 rows: 8,
                 columns: 50,
                 limit: 1000
+            }} />
+        </div>
+    }
+
+    const emailView = () => {
+        return <Field props={{
+            value: emailTopic,
+            label: "What Should The Email Say?",
+            placeholder: "What is the status on this report? (It may also help to include information about who this is being sent to)",
+            errorText: "Cannot be empty",
+            inputType: "text",
+            onChanged: function (val: string): void {
+                setEmailTopic(val)
+            },
+            isValid: emailTopic.length != 0,
+            isTextArea: true,
+            rows: 8,
+            columns: 50,
+            limit: 1000
+        }} />
+    }
+
+    const emailReplyView = () => {
+        return <div className="grid md:grid-cols-2 gap-4">
+            <Field props={{
+                value: email,
+                label: "The Email To Reply",
+                placeholder: "What is the status on this report?",
+                errorText: "Cannot be empty",
+                inputType: "text",
+                onChanged: function (val: string): void {
+                    setEmail(val)
+                },
+                isValid: email.length != 0,
+                isTextArea: true,
+                rows: 8,
+                columns: 50,
+                limit: 1000
+            }} />
+            <Field props={{
+                value: emailTopic,
+                label: "What Should The Email Say?",
+                placeholder: "There is no status ...",
+                errorText: "Cannot be empty",
+                inputType: "text",
+                onChanged: function (val: string): void {
+                    setEmailTopic(val)
+                },
+                isValid: emailTopic.length != 0,
+                isTextArea: true,
+                rows: 8,
+                columns: 50,
+                limit: 500
             }} />
         </div>
     }
