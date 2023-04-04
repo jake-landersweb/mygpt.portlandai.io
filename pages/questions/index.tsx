@@ -6,6 +6,7 @@ import Question from "@/utils/question";
 import QuestionType from "@/utils/questionType";
 import questionsValid from "@/utils/questionValid";
 import { getSession } from "@/utils/getSession";
+import ErrorPage from "@/components/error";
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
     return getSession(req, res)
@@ -171,6 +172,9 @@ export default function Questions({ sessionData, showError }: InferGetServerSide
         }
     }
 
+    if (showError) {
+        return <ErrorPage message="Oh no! There was an issue loading this page." />
+    }
 
     return <div className="space-y-4">
         <div className="text-center md:text-left">

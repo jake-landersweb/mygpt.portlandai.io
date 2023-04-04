@@ -6,14 +6,16 @@
 
 .content-enter-active {
   opacity: 1;
-  max-height: 500px; /* Change this value to a suitable maximum height */
+  max-height: 500px;
+  /* Change this value to a suitable maximum height */
   transition: opacity 300ms, max-height 300ms;
   overflow: hidden;
 }
 
 .content-exit {
   opacity: 1;
-  max-height: 500px; /* Change this value to a suitable maximum height */
+  max-height: 500px;
+  /* Change this value to a suitable maximum height */
   overflow: hidden;
 }
 

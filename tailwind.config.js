@@ -5,7 +5,6 @@ module.exports = {
     "./pages/**/*.{js,ts,jsx,tsx}",
     "./components/**/*.{js,ts,jsx,tsx}",
     require.resolve('react-widgets/styles.css'),
-
   ],
   theme: {
     extend: {

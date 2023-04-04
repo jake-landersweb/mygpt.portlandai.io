@@ -9,6 +9,8 @@ import styles from './Interface.module.css';
 import NumberPicker from "react-widgets/NumberPicker";
 import "react-widgets/styles.css";
 import { DropdownList } from "react-widgets/cjs";
+import Link from "next/link";
+import ErrorPage from "@/components/error";
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
     return getSession(req, res)
@@ -180,7 +182,7 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
             errorText: "Cannot be empty",
             inputType: "text",
             onChanged: function (val: string): void {
-                setJobPosting(val)
+                setJobPosting(val.replace(/[\t\r\n ]+/g, ' '))
             },
             isValid: jobPosting.length != 0,
             isTextArea: true,
@@ -265,7 +267,7 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
                 errorText: "Cannot be empty",
                 inputType: "text",
                 onChanged: function (val: string): void {
-                    setEssayPrompt(val)
+                    setEssayPrompt(val.replace(/[\t\r\n ]+/g, ' '))
                 },
                 isValid: essayPrompt.length != 0,
                 isTextArea: true,
@@ -303,7 +305,7 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
                 errorText: "Cannot be empty",
                 inputType: "text",
                 onChanged: function (val: string): void {
-                    setEmail(val)
+                    setEmail(val.replace(/[\t\r\n ]+/g, ' '))
                 },
                 isValid: email.length != 0,
                 isTextArea: true,
@@ -329,8 +331,11 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
         </div>
     }
 
-    return <div className="">
+    if (showError) {
+        return <ErrorPage message="Oh no! There was an issue loading this page." />
+    }
 
+    return <div className="">
         <div className="space-y-2 pb-16">
             <h3 className="md:pl-8 text-2xl font-bold">1. Some more personalization</h3>
             <div className="grid md:grid-cols-2 gap-4">
@@ -341,7 +346,7 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
                     errorText: "Cannot be empty",
                     inputType: "text",
                     onChanged: function (val: string): void {
-                        setResume(val)
+                        setResume(val.replace(/[\t\r\n ]+/g, ' '))
                     },
                     isValid: resume.length != 0,
                     isTextArea: true,
@@ -356,7 +361,7 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
                     errorText: "Cannot be empty",
                     inputType: "text",
                     onChanged: function (val: string): void {
-                        setWriting(val)
+                        setWriting(val.replace(/[\t\r\n ]+/g, ' '))
                     },
                     isValid: writing.length != 0,
                     isTextArea: true,
@@ -414,6 +419,9 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
                     </svg>
                 </p>
             </button>
+        </div>
+        <div className="my-8 text-center grid place-items-center">
+            <Link href="/questions"><p className="text-main underline hover:opacity-50 transition-all">Change my questionare answers</p></Link>
         </div>
     </div>
 }
