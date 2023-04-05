@@ -15,7 +15,7 @@ export default async function handler(
         res.status(400).json({ message: "There was no sessionId passed", vmessages: [] })
     }
 
-    const response = await fetch(`${process.env.HOST!}/session/${sessionId}/coverLetter`, {
+    const response = await fetch(`${process.env.HOST!}/session/${sessionId}/tiktok`, {
         "method": "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(req.body),

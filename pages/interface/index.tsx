@@ -1,16 +1,18 @@
 import Field from "@/components/field";
 import { getSession } from "@/utils/getSession"
-import questionsValid from "@/utils/questionValid";
 import { GetServerSideProps, InferGetServerSidePropsType } from "next"
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import styles from './Interface.module.css';
 import NumberPicker from "react-widgets/NumberPicker";
-import "react-widgets/styles.css";
+// import "react-widgets/styles.css";
 import { DropdownList } from "react-widgets/cjs";
 import Link from "next/link";
 import ErrorPage from "@/components/error";
+import { questionsValid } from "@/utils/question";
+import { FiThumbsUp, FiThumbsDown } from 'react-icons/fi'
+import { IoClose } from 'react-icons/io5'
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
     return getSession(req, res)
@@ -21,28 +23,22 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
 
     const availableModes = [
         { value: 10, label: "I Need a Cover Letter" },
-        { value: 1, label: "I Want a LinkedIn Post" },
-        { value: 2, label: "Twitter!" },
-        { value: 3, label: "I Need a TikTok Script" },
-        { value: -1, label: "Im Posting On Another Platform" },
-        { value: 20, label: "I Need to Write an Essay" },
-        { value: 30, label: "Compose An Email" },
-        { value: 40, label: "Reply to an Email" },
+        { value: 1, label: "Post To My Network on LinkedIn" },
+        { value: 2, label: "I Need to Tweet!" },
+        { value: 3, label: "Inspiration for a TikTok Script" },
     ]
 
+    const [type, setType] = useState(availableModes[0])
+    const [reset, setReset] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [resume, setResume] = useState("")
     const [writing, setWriting] = useState("")
+    const [vmessages, setVMessages] = useState<[{ role: string, content: string }] | []>([])
+
     const [jobPosting, setJobPosting] = useState("")
     const [postIdea, setPostIdea] = useState("")
-    const [essayPrompt, setEssayPrompt] = useState("")
-    const [paragraphs, setParagraphs] = useState(3)
-    const [email, setEmail] = useState("")
-    const [emailTopic, setEmailTopic] = useState("")
-    const [resp, setResp] = useState("")
-    const [reset, setReset] = useState(false)
-    const [type, setType] = useState(availableModes[0])
-    const [prompt, setPrompt] = useState("")
+
+    const [showFeedback, setShowFeedback] = useState(false)
 
     function scrollToBottom() {
         const scrollHeight = document.documentElement.scrollHeight;
@@ -57,10 +53,10 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
 
     useEffect(() => {
         // make sure the session is valid
-        if (sessionData['promptItems'].length == 0) {
+        if (sessionData['preferences'].length == 0) {
             router.push("/questions");
         }
-        if (!questionsValid(sessionData['promptItems'])) {
+        if (!questionsValid(sessionData['preferences'])) {
             router.push("/questions");
         }
 
@@ -69,20 +65,24 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
         setWriting(sessionData['writingSample'])
 
         if (sessionData['vmessages'].length != 0) {
-            setResp(sessionData['vmessages'][1]['content'])
+            setVMessages(sessionData['vmessages'])
         }
     }, []);
 
     const sendChat = async () => {
-        if (resp.length == 0) {
+        if (vmessages.length == 0) {
             setIsLoading(true)
 
             let response: Response
             let data: any
 
+            let msg
+
             switch (type.value) {
                 case 10:
-                    data = { message: jobPosting, reset: reset, writingSample: writing, resume: resume }
+                    msg = "Create me a cover letter!"
+                    setVMessages([{ role: "user", content: msg }])
+                    data = { jobPosting: jobPosting, writingSample: writing, resume: resume, reset: reset, vmessage: msg }
                     response = await fetch(`/api/session/${sessionData['sessionId']}/cover-letter`, {
                         "method": "POST",
                         headers: { "Content-Type": "application/json" },
@@ -90,55 +90,44 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
                     })
                     break
                 case 1:
+                    msg = postIdea
+                    setVMessages([{ role: "user", content: msg }])
+                    data = { postIdea: postIdea, writingSample: writing, resume: resume, reset: reset, vmessage: msg }
+                    response = await fetch(`/api/session/${sessionData['sessionId']}/linkedin-post`, {
+                        "method": "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(data),
+                    })
+                    break
                 case 2:
+                    msg = postIdea
+                    setVMessages([{ role: "user", content: msg }])
+                    data = { postIdea: postIdea, writingSample: writing, resume: resume, reset: reset, vmessage: msg }
+                    response = await fetch(`/api/session/${sessionData['sessionId']}/tweet`, {
+                        "method": "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(data),
+                    })
+                    break
                 case 3:
-                    data = { message: postIdea, reset: reset, writingSample: writing, resume: resume, type: type.value }
-                    response = await fetch(`/api/session/${sessionData['sessionId']}/post`, {
+                    msg = postIdea
+                    setVMessages([{ role: "user", content: msg }])
+                    data = { postIdea: postIdea, writingSample: writing, resume: resume, reset: reset, vmessage: msg }
+                    response = await fetch(`/api/session/${sessionData['sessionId']}/tiktok`, {
                         "method": "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(data),
                     })
                     break
-                case 20:
-                    data = { message: essayPrompt, reset: reset, writingSample: writing, paragraphs: paragraphs }
-                    response = await fetch(`/api/session/${sessionData['sessionId']}/essay`, {
-                        "method": "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(data),
-                    })
-                    break
-                case 30:
-                    data = { reset: reset, writingSample: writing, resume: resume, emailTopic: emailTopic }
-                    response = await fetch(`/api/session/${sessionData['sessionId']}/email`, {
-                        "method": "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(data),
-                    })
-                    break
-                case 40:
-                    data = { reset: reset, writingSample: writing, resume: resume, email: email, emailTopic: emailTopic }
-                    response = await fetch(`/api/session/${sessionData['sessionId']}/email`, {
-                        "method": "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(data),
-                    })
-                    break
-                case -1:
-                    data = { message: postIdea, reset: reset, writingSample: writing, resume: resume, type: type.value, prompt: "" }
-                    response = await fetch(`/api/session/${sessionData['sessionId']}/post`, {
-                        "method": "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(data),
-                    })
-                    break
-
             }
 
             setIsLoading(false)
 
             if (response!.status == 200) {
                 const data = await response!.json()
-                setResp(data['vmessages'][1]['content'])
+                setVMessages(data['vmessages'])
+                setShowFeedback(true)
+                sessionData = data
                 setTimeout(() => {
                     scrollToBottom()
                 }, 600);
@@ -149,8 +138,55 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
             setIsLoading(false)
         } else {
             setReset(true)
-            setResp("")
+            setShowFeedback(false)
+            setVMessages([])
         }
+    }
+
+    const sendFeedback = async (rating: number) => {
+        if (rating != 0) {
+            let data = { rating: rating, messages: sessionData['messages'], sessionId: sessionData['sessionId'] }
+            const response = await fetch(`/api/feedback`, {
+                "method": "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            })
+            if (response.status == 200) {
+                setShowFeedback(false)
+            } else {
+                alert("There was an issue posting the feedback")
+
+            }
+        }
+    }
+
+    const conversation = () => {
+        let items = []
+
+        for (let i = 0; i < vmessages.length; i++) {
+            let content
+            if (vmessages[i]['role'] == 'user') {
+                content = <div className="flex justify-between">
+                    <div className="w-[100px]"></div>
+                    <p className="bg-main py-2 px-4 w-fit text-white rounded-b-lg rounded-l-lg rounded-tr-sm">{vmessages[i]['content']}</p>
+                </div>
+            } else {
+                content = <div className="flex justify-between">
+                    <p className="bg-container w-fit py-2 px-4 text-left rounded-b-lg rounded-r-lg rounded-tl-sm">{vmessages[i]['content']}</p>
+                    <div className="w-[100px]"></div>
+                </div>
+            }
+            items.push(<CSSTransition key={i} timeout={300} classNames={{
+                enter: styles['content-enter'],
+                enterActive: styles['content-enter-active'],
+                exit: styles['content-exit'],
+                exitActive: styles['content-exit-active']
+            }}>
+                {content}
+            </CSSTransition>)
+        }
+
+        return items
     }
 
     const getView = () => {
@@ -158,17 +194,11 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
             case 10:
                 return coverLetter()
             case 1:
+                return linkedinPost()
             case 2:
+                return tweet()
             case 3:
-                return postView()
-            case -1:
-                return customPostView()
-            case 20:
-                return essayView()
-            case 30:
-                return emailView()
-            case 40:
-                return emailReplyView()
+                return tiktok()
             default:
                 return <div className=""></div>
         }
@@ -192,15 +222,15 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
         }} />
     }
 
-    const postView = () => {
+    const linkedinPost = () => {
         return <Field props={{
             value: postIdea,
-            label: "My Post Idea",
-            placeholder: "I got a new job!",
+            label: "Post Idea",
+            placeholder: "I have just accepted a job!",
             errorText: "Cannot be empty",
             inputType: "text",
             onChanged: function (val: string): void {
-                setPostIdea(val)
+                setPostIdea(val.replace(/[\t\r\n ]+/g, ' '))
             },
             isValid: postIdea.length != 0,
             isTextArea: true,
@@ -210,125 +240,40 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
         }} />
     }
 
-    const customPostView = () => {
-        return <div className="grid md:grid-cols-2 gap-4">
-            <Field props={{
-                value: postIdea,
-                label: "My Post Idea",
-                placeholder: "I got a new job!",
-                errorText: "Cannot be empty",
-                inputType: "text",
-                onChanged: function (val: string): void {
-                    setPostIdea(val)
-                },
-                isValid: postIdea.length != 0,
-                isTextArea: true,
-                rows: 8,
-                columns: 50,
-                limit: 500
-            }} />
-            <Field props={{
-                value: prompt,
-                label: "Explain The Platform",
-                placeholder: "Explain a bit about what platform you are posting this content onto",
-                errorText: "Cannot be empty",
-                inputType: "text",
-                onChanged: function (val: string): void {
-                    setPrompt(val)
-                },
-                isValid: prompt.length != 0,
-                isTextArea: true,
-                rows: 8,
-                columns: 50,
-                limit: 500
-            }} />
-        </div>
-    }
-
-    const essayView = () => {
-        return <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-                <h3 className="font-bold text-md ml-4 text-gray-500">
-                    How Many Paragraphs?
-                </h3>
-                <div className="max-w-[75px]">
-                    <NumberPicker
-                        defaultValue={paragraphs}
-                        max={5}
-                        min={1}
-                        onChange={value => setParagraphs(value!)}
-                    />
-                </div>
-            </div>
-            <Field props={{
-                value: essayPrompt,
-                label: "What is your essay about?",
-                placeholder: "Paste in a rubric or explain.",
-                errorText: "Cannot be empty",
-                inputType: "text",
-                onChanged: function (val: string): void {
-                    setEssayPrompt(val.replace(/[\t\r\n ]+/g, ' '))
-                },
-                isValid: essayPrompt.length != 0,
-                isTextArea: true,
-                rows: 8,
-                columns: 50,
-                limit: 1000
-            }} />
-        </div>
-    }
-
-    const emailView = () => {
+    const tweet = () => {
         return <Field props={{
-            value: emailTopic,
-            label: "What Should The Email Say?",
-            placeholder: "What is the status on this report? (It may also help to include information about who this is being sent to)",
+            value: postIdea,
+            label: "Tweet Idea",
+            placeholder: "I have just accepted a job!",
             errorText: "Cannot be empty",
             inputType: "text",
             onChanged: function (val: string): void {
-                setEmailTopic(val)
+                setPostIdea(val.replace(/[\t\r\n ]+/g, ' '))
             },
-            isValid: emailTopic.length != 0,
+            isValid: postIdea.length != 0,
             isTextArea: true,
             rows: 8,
             columns: 50,
-            limit: 1000
+            limit: 500
         }} />
     }
 
-    const emailReplyView = () => {
-        return <div className="grid md:grid-cols-2 gap-4">
-            <Field props={{
-                value: email,
-                label: "The Email To Reply",
-                placeholder: "What is the status on this report?",
-                errorText: "Cannot be empty",
-                inputType: "text",
-                onChanged: function (val: string): void {
-                    setEmail(val.replace(/[\t\r\n ]+/g, ' '))
-                },
-                isValid: email.length != 0,
-                isTextArea: true,
-                rows: 8,
-                columns: 50,
-                limit: 1000
-            }} />
-            <Field props={{
-                value: emailTopic,
-                label: "What Should The Email Say?",
-                placeholder: "There is no status ...",
-                errorText: "Cannot be empty",
-                inputType: "text",
-                onChanged: function (val: string): void {
-                    setEmailTopic(val)
-                },
-                isValid: emailTopic.length != 0,
-                isTextArea: true,
-                rows: 8,
-                columns: 50,
-                limit: 500
-            }} />
-        </div>
+    const tiktok = () => {
+        return <Field props={{
+            value: postIdea,
+            label: "Script Idea",
+            placeholder: "I have just accepted a job!",
+            errorText: "Cannot be empty",
+            inputType: "text",
+            onChanged: function (val: string): void {
+                setPostIdea(val.replace(/[\t\r\n ]+/g, ' '))
+            },
+            isValid: postIdea.length != 0,
+            isTextArea: true,
+            rows: 8,
+            columns: 50,
+            limit: 500
+        }} />
     }
 
     if (showError) {
@@ -393,24 +338,42 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
         </div>
 
         <div className={`tracking-wide max-w-4xl mx-auto pb-16 text-center`}>
-            <TransitionGroup component={null}>
-                {resp && (
-                    <CSSTransition key={resp} timeout={300} classNames={{
-                        enter: styles['content-enter'],
-                        enterActive: styles['content-enter-active'],
-                        exit: styles['content-exit'],
-                        exitActive: styles['content-exit-active']
-                    }}>
-                        <p>{resp}</p>
-                    </CSSTransition>
-                )}
+            <TransitionGroup className="space-y-2">
+                {conversation()}
+                {showFeedback ? <CSSTransition key={"feedback"} timeout={300} classNames={{
+                    enter: styles['content-enter'],
+                    enterActive: styles['content-enter-active'],
+                    exit: styles['content-exit'],
+                    exitActive: styles['content-exit-active']
+                }}>
+                    <div className="px-4 py-2 items-center bg-container rounded-md grid place-items-center sm:flex sm:justify-between text-txt-500">
+                        <p className="">How was this response?</p>
+                        <div className="flex sm:space-x-2 justify-between sm:justify-normal">
+                            <button onClick={() => sendFeedback(1)} className="md:hover:bg-zinc-200 rounded-md px-4 py-2 transition-all">
+                                <div className="space-y-1 grid place-items-center">
+                                    <FiThumbsUp className="" size={20} />
+                                    <p className="text-xs">Good</p>
+                                </div>
+                            </button>
+                            <button onClick={() => sendFeedback(0)} className="md:hover:bg-zinc-200 rounded-md px-4 py-2 transition-all">
+                                <div className="space-y-1 grid place-items-center">
+                                    <FiThumbsDown className="" size={20} />
+                                    <p className="text-xs">Bad</p>
+                                </div>
+                            </button>
+                            <button onClick={() => setShowFeedback(false)} className="md:hover:bg-zinc-200 rounded-md px-4 py-2 transition-all">
+                                <IoClose className="" size={20} />
+                            </button>
+                        </div>
+                    </div>
+                </CSSTransition> : <></>}
             </TransitionGroup>
         </div>
 
         <div className="grid place-items-center">
             <button onClick={() => sendChat()} className={`${true ? "bg-main hover:opacity-50" : "text-txt-200 bg-container hover:cursor-default"} text-white h-[50px] w-[150px] px-4 py-2 rounded-md transition-all`}>
                 <p className={`${isLoading ? "hidden" : ""}`}>
-                    {resp.length == 0 ? "GPT ME" : "Clear Response"}
+                    {vmessages.length == 0 ? "GPT ME" : "Clear Response"}
                 </p>
                 <p className={`${isLoading ? "" : "hidden"} grid place-items-center`}>
                     <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -421,6 +384,7 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
             </button>
         </div>
         <div className="my-8 text-center grid place-items-center">
+            <p className="text-txt-400">Not quite getting the right tone in your outputs?</p>
             <Link href="/questions"><p className="text-main underline hover:opacity-50 transition-all">Change my questionare answers</p></Link>
         </div>
     </div>
