@@ -1,4 +1,5 @@
 import { deleteCookie, getCookie, hasCookie, setCookie } from "cookies-next"
+import { Session } from "./session"
 
 export async function getSession(req: any, res: any) {
     var response: Response
@@ -27,10 +28,10 @@ export async function getSession(req: any, res: any) {
         }
     }
 
-    const data = await response.json()
+    const data: Session = await response.json()
 
     // set the cookie data
-    setCookie("sessionId", data['sessionId'], { req, res, maxAge: 60 * 60 * 24 * 14 })
+    setCookie("sessionId", data.sessionId, { req, res, maxAge: 60 * 60 * 24 * 14 })
 
     return {
         props: {

@@ -1,18 +1,19 @@
+import { Session } from '@/utils/session';
 import type { NextApiRequest, NextApiResponse } from 'next'
 
-type Data = {
+type ResponseData = {
     message: string,
-    vmessages: any[]
+    session: Session | undefined
 }
 
 export default async function handler(
     req: NextApiRequest,
-    res: NextApiResponse<Data>
+    res: NextApiResponse<ResponseData>
 ) {
     const { sessionId } = req.query;
 
     if (sessionId == undefined || sessionId.length == 0) {
-        res.status(400).json({ message: "There was no sessionId passed", vmessages: [] })
+        res.status(400).json({ message: "There was no sessionId passed", session: undefined })
     }
 
     const controller = new AbortController()
@@ -20,7 +21,7 @@ export default async function handler(
         controller.abort()
     }, 60000)
 
-    const response = await fetch(`${process.env.HOST!}/session/${sessionId}/custom`, {
+    const response = await fetch(`${process.env.HOST!}/session/${sessionId}/extend`, {
         "method": "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(req.body),
@@ -29,13 +30,12 @@ export default async function handler(
 
     clearTimeout(timeout)
 
-    const data = await response.json()
-
-    console.log(data)
+    const data: Session = await response.json()
 
     if (response.status == 200) {
-        res.status(200).json({ message: "Successfully updated.", vmessages: data['vmessages'] })
+        res.status(200).json({ message: "Successfully extended conversation.", session: data })
     } else {
-        res.status(400).json({ message: data.message, vmessages: [] })
+        console.log(data)
+        res.status(400).json({ message: "There was an issue with the request", session: undefined })
     }
 }

@@ -33,6 +33,9 @@ const Field = ({ props }: { props: FieldArgs }) => {
     }
 
     const label = () => {
+        if (props.label == "") {
+            return <></>
+        }
         return <div className="flex space-x-4 items-center justify-between">
             <h3 className="font-bold text-md ml-4 text-gray-500">
                 {props.label}
