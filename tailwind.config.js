@@ -9,7 +9,10 @@ module.exports = {
     extend: {
       colors: {
         "container": "#efefef",
-        "main": "#9b92de",
+        acc1: "#3c63ec",
+        main: "#a47de2",
+        acc2: "#ca5bd8",
+        acc3: "#eb4c4f",
         txt: {
           DEFAULT: '#23262E',
           '50': '#C2C6D1',

@@ -219,8 +219,8 @@
     border-color: #e9ecef;
   }
   .rw-list-option.rw-state-selected, .rw-state-selected.rw-list-option-create {
-    background-color: #9b92de;
-    border-color: #9b92de;
+    background-color: #a47de2;
+    border-color: #a47de2;
     color: #fff;
   }
   .rw-list-option.rw-state-disabled, .rw-state-disabled.rw-list-option-create {
@@ -626,8 +626,8 @@
     background-color: #dee2e6;
   }
   .rw-cell.rw-state-selected {
-    background-color: #9b92de;
-    border-color: #9b92de;
+    background-color: #a47de2;
+    border-color: #a47de2;
     color: #fff;
   }
   .rw-calendar-month .rw-cell {

@@ -26,6 +26,19 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
         { value: 1, label: "Post To My Network on LinkedIn" },
         { value: 2, label: "I Need to Tweet!" },
         { value: 3, label: "Inspiration for a TikTok Script" },
+        { value: 20, label: "Time To Write An Essay" },
+        { value: 30, label: "I Need To Compose an Email" },
+        { value: 40, label: "Custom Content Generation" },
+    ]
+
+    const availableTemps = [
+        { value: 0.6, label: "Plain, Boring, and Predictable" },
+        { value: 0.7, label: "Simple and Deterministic" },
+        { value: 0.85, label: "Slightly Creative" },
+        { value: 1.0, label: "Quite Creative" },
+        { value: 1.2, label: "Very Creative" },
+        { value: 1.4, label: "Crazy and Eccentric" },
+        { value: 1.6, label: "Batshit Insane - (Can time out)" },
     ]
 
     const [type, setType] = useState(availableModes[0])
@@ -37,6 +50,15 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
 
     const [jobPosting, setJobPosting] = useState("")
     const [postIdea, setPostIdea] = useState("")
+
+    const [paragraphs, setParagraphs] = useState(3)
+    const [essayTopic, setEssayTopic] = useState("")
+
+    const [emailTopic, setEmailTopic] = useState("")
+
+    const [task, setTask] = useState("")
+    const [information, setInformation] = useState("")
+    const [temp, setTemp] = useState(availableTemps[2])
 
     const [showFeedback, setShowFeedback] = useState(false)
 
@@ -66,6 +88,10 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
 
         if (sessionData['vmessages'].length != 0) {
             setVMessages(sessionData['vmessages'])
+        }
+        const mode = availableModes.find(item => item.value === sessionData['currentType']);
+        if (mode != undefined) {
+            setType(mode)
         }
     }, []);
 
@@ -119,6 +145,36 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
                         body: JSON.stringify(data),
                     })
                     break
+                case 20:
+                    msg = essayTopic
+                    setVMessages([{ role: "user", content: msg }])
+                    data = { topic: essayTopic, paragraphs: paragraphs, writingSample: writing, resume: resume, reset: reset, vmessage: msg }
+                    response = await fetch(`/api/session/${sessionData['sessionId']}/essay`, {
+                        "method": "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(data),
+                    })
+                    break
+                case 30:
+                    msg = emailTopic
+                    setVMessages([{ role: "user", content: msg }])
+                    data = { topic: emailTopic, writingSample: writing, resume: resume, reset: reset, vmessage: msg }
+                    response = await fetch(`/api/session/${sessionData['sessionId']}/email`, {
+                        "method": "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(data),
+                    })
+                    break
+                case 40:
+                    msg = task
+                    setVMessages([{ role: "user", content: msg }])
+                    data = { task: task, information: information, temp: temp.value, writingSample: writing, resume: resume, reset: reset, vmessage: msg }
+                    response = await fetch(`/api/session/${sessionData['sessionId']}/custom`, {
+                        "method": "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(data),
+                    })
+                    break
             }
 
             setIsLoading(false)
@@ -132,7 +188,8 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
                     scrollToBottom()
                 }, 600);
             } else {
-                alert("There was an issue updating your answers")
+                const data = await response!.json()
+                alert(data.message)
             }
 
             setIsLoading(false)
@@ -199,6 +256,12 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
                 return tweet()
             case 3:
                 return tiktok()
+            case 20:
+                return essay()
+            case 30:
+                return email()
+            case 40:
+                return custom()
             default:
                 return <div className=""></div>
         }
@@ -274,6 +337,107 @@ export default function Interface({ sessionData, showError }: InferGetServerSide
             columns: 50,
             limit: 500
         }} />
+    }
+
+    const essay = () => {
+        return <div className="space-y-1">
+            <div className="max-w-2xl space-y-1">
+                <h3 className="font-bold text-md ml-4 text-gray-500">
+                    Paragraphs
+                </h3>
+                <NumberPicker
+                    max={5}
+                    min={1}
+                    defaultValue={paragraphs}
+                    onChange={value => setParagraphs(value!)}
+                />
+            </div>
+            <Field props={{
+                value: essayTopic,
+                label: "Essay Topic",
+                placeholder: "I love nature so much!",
+                errorText: "Cannot be empty",
+                inputType: "text",
+                onChanged: function (val: string): void {
+                    setEssayTopic(val.replace(/[\t\r\n ]+/g, ' '))
+                },
+                isValid: essayTopic.length != 0,
+                isTextArea: true,
+                rows: 8,
+                columns: 50,
+                limit: 500
+            }} />
+        </div>
+    }
+
+    const email = () => {
+        return <Field props={{
+            value: emailTopic,
+            label: "Email Topic",
+            placeholder: "I'm not making it to work tomorrow",
+            errorText: "Cannot be empty",
+            inputType: "text",
+            onChanged: function (val: string): void {
+                setEmailTopic(val.replace(/[\t\r\n ]+/g, ' '))
+            },
+            isValid: emailTopic.length != 0,
+            isTextArea: true,
+            rows: 8,
+            columns: 50,
+            limit: 500
+        }} />
+    }
+
+    const custom = () => {
+        return <div className="space-y-2">
+            <div className="space-y-1 max-w-2xl">
+                <h3 className="font-bold text-md ml-4 text-gray-500">
+                    Writing Creativity
+                </h3>
+                <DropdownList
+                    dataKey="value"
+                    textField="label"
+                    defaultValue={temp}
+                    value={temp}
+                    filter={false}
+                    autoFocus={false}
+                    data={availableTemps}
+                    onChange={(nextValue) => setTemp(nextValue)}
+                />
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+                <Field props={{
+                    value: task,
+                    label: "The Task at Hand",
+                    placeholder: "I need a paragraph written about trees.",
+                    errorText: "Cannot be empty",
+                    inputType: "text",
+                    onChanged: function (val: string): void {
+                        setTask(val.replace(/[\t\r\n ]+/g, ' '))
+                    },
+                    isValid: task.length != 0,
+                    isTextArea: true,
+                    rows: 8,
+                    columns: 50,
+                    limit: 500
+                }} />
+                <Field props={{
+                    value: information,
+                    label: "Additional Information",
+                    placeholder: "My favorite type of trees are mahogany, and my resume says why.",
+                    errorText: "Cannot be empty",
+                    inputType: "text",
+                    onChanged: function (val: string): void {
+                        setInformation(val.replace(/[\t\r\n ]+/g, ' '))
+                    },
+                    isValid: information.length != 0,
+                    isTextArea: true,
+                    rows: 8,
+                    columns: 50,
+                    limit: 500
+                }} />
+            </div>
+        </div>
     }
 
     if (showError) {

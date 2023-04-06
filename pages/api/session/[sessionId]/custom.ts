@@ -15,11 +15,19 @@ export default async function handler(
         res.status(400).json({ message: "There was no sessionId passed", vmessages: [] })
     }
 
-    const response = await fetch(`${process.env.HOST!}/session/${sessionId}/generate-email-reply`, {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => {
+        controller.abort()
+    }, 60000)
+
+    const response = await fetch(`${process.env.HOST!}/session/${sessionId}/custom`, {
         "method": "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(req.body),
+        signal: controller.signal,
     })
+
+    clearTimeout(timeout)
 
     const data = await response.json()
 
@@ -28,6 +36,6 @@ export default async function handler(
     if (response.status == 200) {
         res.status(200).json({ message: "Successfully updated.", vmessages: data['vmessages'] })
     } else {
-        res.status(400).json({ message: "There was an issue", vmessages: [] })
+        res.status(400).json({ message: data.message, vmessages: [] })
     }
 }
