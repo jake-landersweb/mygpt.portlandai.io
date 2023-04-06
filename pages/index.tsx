@@ -52,7 +52,7 @@ export default function Home() {
           <p className="max-w-2xl mb-6 font-light text-gray-500 lg:mb-8 md:text-lg lg:text-xl">SyncAI (Synthesizing Your Natural Content) is an AI-powered personal content creator to empower creators to unlock their unique voices.</p>
           <div className="mt-4 video-player-controls">
             <video width="100%" height="auto" className='max-w-[700px] object-scale-down rounded-md border border-container' controls>
-              <source src="/videos/SyncAI-demo.mp4" type="video/mp4" />
+              <source src="/videos/syncai-demo.mp4" type="video/mp4" />
             </video>
           </div>
           <div className="flex space-x-2 mt-4">
